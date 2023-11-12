@@ -9,7 +9,7 @@ from utils import *
 
 class temporal_difference_class():
     
-    def __init__(self, alpha = 0.4, discount_value = 0.99, epsilon = 0.5, load_maze = False, maze_args = [], actions= [], num_iterations = 1000, player_char = 9):
+    def __init__(self, alpha = 0.4, discount_value = 0.99, epsilon = 0.1, load_maze = False, maze_args = [], actions= [], num_iterations = 1000, player_char = 9):
         self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = discount_value
@@ -39,7 +39,9 @@ class temporal_difference_class():
             self.path = path
     
     def epsilon_greedy_policy(self, q, state, epsilon):
-
+        """
+            This method returns with epsilon probability either a random action or the best action
+        """
         utils = common_functions()
         if random.uniform(0,1) < epsilon:
             return self.actions[random.randrange(0,len(self.actions))]
@@ -219,11 +221,12 @@ class sarsa_class(temporal_difference_class):
 
 actions = ["up","down","right","left","jump_up","jump_down","jump_right","jump_left"]
 utils = common_functions()
-path_to_file_maze = "./saved_maze/maze5"
+path_to_file_maze = "./saved_maze/maze3"
 
+#(0.5, 0.99, 0.9, 0, 27.30000000000002)
 alphas = [0.5] #[0.5, 0.6, 0.99, 1]
 gammas = [0.99] #[0.85, 0.9, 0.99]
-epsilons = [0.8] #[0.8, 0.9, 0.99]
+epsilons = [0.2] #[0.8, 0.9, 0.99]
 lambdas = [0.25] #[0.25, 0.35, 0.5, 0.75, 0.85, 0.9, 0.99]
 
 results = []
@@ -232,19 +235,19 @@ results = []
 c = 0
 comb_numb = len(alphas) * len(gammas) * len(epsilons) * len(lambdas)
 
-for la in lambdas:
-    for alpha in alphas:
-        for gamma in gammas:
-            for epsilon in epsilons:       
-                print("testing combination ", c, "/", comb_numb, "alpha: "+str(alpha)+" gamma: "+str(gamma)+" lambda: "+str(la) +" epsilon: "+str(epsilon))
-                c+=1
-                q, policy = sarsa_class(alpha = alpha, discount_value = gamma, epsilon = epsilon, load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 2000).sarsa_lambda(lambda_par = la)
-                sarsa_lambda_score = utils.play_episode(policy, path_to_file_maze, step_by_step = False)
-                results.append((alpha, gamma, epsilon, la, sarsa_lambda_score))
-                maze_generator().save_maze_as_csv(policy, ("./saved_maze/lambda_sarsa_policy/policy_sarsa_lambda"+str(alpha)+"_"+str(gamma)+"_"+str(epsilon)+"_"+str(la)), "float")
-                common_functions().save_dictionary_to_csv(q, ("./saved_maze/lambda_sarsa_Q/Q_sarsa_lambda"+str(alpha)+"_"+str(gamma)+"_"+str(epsilon)+"_"+str(la)))
+#for la in lambdas:
+for alpha in alphas:
+    for gamma in gammas:
+        for epsilon in epsilons:       
+            print("testing combination ", c, "/", comb_numb, "alpha: "+str(alpha)+" gamma: "+str(gamma)+" lambda: "+str(0) +" epsilon: "+str(epsilon))
+            c+=1
+            q, policy = sarsa_class(alpha = alpha, discount_value = gamma, epsilon = epsilon, load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 6000).sarsa()
+            sarsa_score = utils.play_episode(policy, path_to_file_maze, step_by_step = False)
+            results.append((alpha, gamma, epsilon, 0, sarsa_score))
+            #maze_generator().save_maze_as_csv(policy, ("./saved_maze/lambda_sarsa_policy/policy_sarsa_lambda"+str(alpha)+"_"+str(gamma)+"_"+str(epsilon)+"_"+str(0)), "float")
+            #common_functions().save_dictionary_to_csv(q, ("./saved_maze/lambda_sarsa_Q/Q_sarsa_lambda"+str(alpha)+"_"+str(gamma)+"_"+str(epsilon)+"_"+str(0)))
 
-"""
+
 pos_result = []
 for result in results:
     print(result)
@@ -254,21 +257,21 @@ for result in results:
 rerun_score = []
 for result in pos_result:
     print(result)
-    q, policy = sarsa_class(alpha = result[0], discount_value = result[1], epsilon = result[2], load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 4000).sarsa_lambda(lambda_par = result[3])
+    q, policy = sarsa_class(alpha = result[0], discount_value = result[1], epsilon = result[2], load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 4000).sarsa()
     sarsa_lambda_score = utils.play_episode(policy, path_to_file_maze, step_by_step = False)
     rerun_score.append(sarsa_lambda_score)
 print("---")
 print(rerun_score)
-"""
 
 
-q, policy = sarsa_class(alpha = 0.5, discount_value = 0.99, epsilon = 0.9, load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 2000).sarsa()
-sarsa_score = utils.play_episode(policy, path_to_file_maze)
+
+q, policy = sarsa_class(alpha = 0.5, discount_value = 0.99, epsilon = 0.2, load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 2000).sarsa_lambda(lambda_par = 0.25)
+sarsa_lambda_score = utils.play_episode(policy, path_to_file_maze)
 
 q, policy = Q_learning_class(alpha = 0.6 ,discount_value=0.99, load_maze=True, maze_args=[path_to_file_maze], actions=actions).Q_learning()
 Q_learning_score = utils.play_episode(policy, path_to_file_maze)
 
 
 print("Q_learning solved the maze with a score of: ", str(Q_learning_score))
-print("SARSA iteration solved the maze with a score of: ", str(sarsa_score))
-print("SARSA-lambda iteration solved the maze with a score of: ", str(sarsa_lambda_score))
+#print("SARSA iteration solved the maze with a score of: ", str(sarsa_score))
+#print("SARSA-lambda iteration solved the maze with a score of: ", str(sarsa_lambda_score))

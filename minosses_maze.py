@@ -123,7 +123,9 @@ class maze_actions():
         self.win_coords = win_coords
 
     def simulate_step(self, maze, state, action, explored_path = [], step_size = 1, override_cost = [False, 0]):    
-
+        """
+            Given a maze, a state and an action this method simulates and returns what would happen (next state and reward) if a specific action is taken
+        """
         if action == "up":
             _, _, next_state, reward = self.go_up(maze, state, 1, 9, explored_path = explored_path, step_size = step_size, override_cost = override_cost)
         elif action == "down":

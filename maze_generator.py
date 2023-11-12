@@ -126,7 +126,9 @@ class maze_generator:
         return maze, path
 
     def complicate_maze(self, size_x, size_y, maze, n_new_points, path, mode = "random", log = False):
-        
+        """
+            adds new paths in the maze adding to the complexity of navigating it.
+        """
         original_path = path.copy()
         i = 0
         while i < n_new_points:

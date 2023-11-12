@@ -23,19 +23,26 @@ class common_functions():
     def action_value_function(self, state, action, finish_coord, final_state_reward = 0, pas_char = 1):
         """
             action represents the action id eg. "up", "down", etc
+            This method returns the simulation of a specific action form a specific state
         """
         action_call = maze_actions(win_coords=finish_coord)
         maze_copy = np.copy(self.maze)
         return action_call.simulate_step(maze_copy, state, action=action)
 
     def find_index_of_coordinate(self, coords_list, target_coord):
+        """
+            Returns the index of the given coord from a list of coords.
+        """
         for index, coord in enumerate(coords_list):
             if coord[0] == target_coord[0] and coord[1] == target_coord[1]:
                 return index
         return -1
 
     def play_episode(self, policy, load_path = "", start_coord = [], finish_coord=[], maze_path=[], step_by_step = False):
-        
+        """
+            Given the policy and either a path to a maze or the maze it self (with the start and finishing coords) this method 
+            runs the policy over the maze showing the result of the policy and returning the score. 
+        """
         if load_path != "":
             self.maze, maze_path, start_coord, finish_coord = maze_generator().load_maze_from_csv(load_path)
             self.size_x = len(self.maze)
