@@ -16,13 +16,17 @@ from utils import *
 
 class deep_Q_learning_class():
     
-    def __init__(self, gamma = 0.99, epsilon = 0.2, load_maze = False, maze_args = [], actions= [], num_iterations = 3000, episodes = 100, batch_size = 32, player_char = 9):
+    def __init__(self, gamma = 0.9, epsilon = 0.2, load_maze = False, maze_args = [], actions= [], num_iterations = 500, episodes = 2000, batch_size = 64, player_char = 9):
         self.gamma = gamma
         self.actions = actions
         self.num_iteration = num_iterations
         self.episodes = episodes
         self.player_char = player_char
         self.epsilon = epsilon
+        
+        self.device = "cpu"
+        if torch.cuda.is_available():
+            self.device = "cuda"
 
         generator = maze_generator()      
         
@@ -48,10 +52,12 @@ class deep_Q_learning_class():
         self.target_deepQ_network = target_Q_network(len(self.path[0]), len(self.actions))
         self.replay_buffer = replay_buffer(10000, [])
         self.batch_size = batch_size
-
+        self.optimizer = torch.optim.Adam(self.deepQ_network.parameters())
+        self.optimizer_tsq = torch.optim.Adam(self.target_deepQ_network.parameters())
+        self.MSE_loss = nn.MSELoss()
+        
     def epsilon_greedy_policy(self, state, epsilon):
 
-        utils = common_functions()
         if random.uniform(0,1) < epsilon:
             action = random.randrange(0,len(self.actions))
             return self.actions[action], action
@@ -65,7 +71,6 @@ class deep_Q_learning_class():
         policy = np.zeros([len(self.path),len(self.actions)])
         values = F.softmax(q, dim=1).detach().numpy()
 
-
         for i in range(0,len(values)):
             best_action = np.argmax(values[i])
             policy[i][best_action] = 1 
@@ -75,7 +80,7 @@ class deep_Q_learning_class():
 
     def DQN_agent(self):
 
-        target_update_frequency = 2  # how often to update target Q-network
+        target_update_frequency = 10  # how often to update target Q-network
 
         policy = np.zeros([len(self.path),len(self.actions)])
 
@@ -107,7 +112,7 @@ class deep_Q_learning_class():
                 with torch.no_grad():
                     target_q_values_next = self.target_deepQ_network(torch.FloatTensor(next_states))
                     target_q_values_next_max, _ = target_q_values_next.max(dim=1)
-                    target_q_values = torch.FloatTensor(rewards) + self.gamma * (1 - torch.FloatTensor(dones)) * target_q_values_next_max
+                    target_q_values = (torch.FloatTensor(rewards) + self.gamma * (1-torch.FloatTensor(dones)) * target_q_values_next_max)
 
                 # Update the Q-network using the loss between predicted Q-values and target Q-values
                 q_values = self.deepQ_network(torch.FloatTensor(states))
@@ -137,6 +142,92 @@ class deep_Q_learning_class():
 
         return q_values, policy
 
+    def vanillaDQN(self):
+        policy = np.zeros([len(self.path),len(self.actions)])
+        episode_rewards = []
+        best_reward = -1e12
+        loss = []
+        
+        for i in tqdm(range(0, self.episodes), desc="DQN-episodes"):
+            
+            utils = common_functions(self.maze)
+            r = 0  
+            state = self.start_coord
+            done = False
+
+            steps = 0
+            while done == False and steps < self.num_iteration:
+                #print("step: ",steps, " reached final state: ", done)
+                steps+=1
+                action, action_id = self.epsilon_greedy_policy(state, self.epsilon)
+                next_state, reward = utils.action_value_function(state, action, self.finish_coord)
+                if reward >= 0: done = True
+                r+=reward
+                
+                # Store (state, action, reward, next_state) in the replay buffer
+                self.replay_buffer.add_experience(state, action_id, reward, next_state, done)
+                
+                
+                if len(self.replay_buffer.buffer) > self.batch_size:
+                    l = self.update() 
+                    loss.append(l)
+                if done: break
+                
+                state = next_state
+
+            if best_reward < r:
+                best_reward = r
+            episode_rewards.append(r)
+            
+        self.plot_loss(loss)
+            
+        for ep in range(0,len(episode_rewards)):  
+            print("epsiode: ",ep," reward: ", episode_rewards[ep])
+            
+        print("best-reward: ", best_reward)
+            
+    def compute_loss(self, batch):
+        states, actions, rewards, next_states, dones = batch
+        states = torch.FloatTensor(states).to(self.device)
+        actions = torch.LongTensor(actions).to(self.device)
+        rewards = torch.FloatTensor(rewards).to(self.device)
+        next_states = torch.FloatTensor(next_states).to(self.device)
+        dones = torch.FloatTensor(dones)
+
+        curr_Q = self.deepQ_network.forward(states).gather(1, actions.unsqueeze(1))
+        curr_Q = curr_Q.squeeze(1)
+        next_Q = self.deepQ_network.forward(next_states)
+        max_next_Q = torch.max(next_Q, 1)[0]
+        expected_Q = rewards.squeeze(1) + self.gamma * max_next_Q
+
+        loss = self.MSE_loss(curr_Q, expected_Q)
+        return loss
+
+    def update(self):
+        batch = self.replay_buffer.sample_batch(self.batch_size)
+        loss = self.compute_loss(batch)
+        loss_copy = loss
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        
+        return loss_copy
+
+    def plot_loss(loss = []):
+        
+        # Generate data for plotting
+        x_values = np.linspace(0, len(loss)+4, len(loss))
+        y_values = loss
+
+        # Plot the loss function
+        plt.plot(x_values, y_values, label='Loss Function')
+        plt.title('Loss Function Visualization')
+        plt.xlabel('Parameter Values')
+        plt.ylabel('Loss Value')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+                
 
 class deep_Q_network(nn.Module):
     """
@@ -145,34 +236,64 @@ class deep_Q_network(nn.Module):
     """
     def __init__(self, input_size, output_size):
         super(deep_Q_network, self).__init__()
-        self.fc1 = nn.Linear(input_size, 64)
-        self.fc2 = nn.Linear(64, output_size)
+        #self.fc1 = nn.Linear(input_size, 128)
+        #self.fc2 = nn.Linear(128, 64)
+        #self.fc3 = nn.Linear(64, output_size)
+        
+        self.fc = nn.Sequential(
+            nn.Linear(input_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.Linear(256, output_size)
+        )
+        
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
+        print(self.device)
+        input()
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+        #x = torch.relu(self.fc1(x))
+        #x = torch.relu(self.fc2(x))
+        #x = self.fc3(x)
+        #return x
+        return self.fc(x)
 
 class target_Q_network(nn.Module):
     def __init__(self, input_size, output_size):
         super(target_Q_network, self).__init__()
-        self.fc1 = nn.Linear(input_size, 64)
-        self.fc2 = nn.Linear(64, output_size)
+        #self.fc1 = nn.Linear(input_size, 64)
+        #self.fc2 = nn.Linear(64, 32)
+        #self.fc3 = nn.Linear(32, output_size)
+        self.fc = nn.Sequential(
+            nn.Linear(input_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.Linear(256, output_size)
+        )
+        
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+        return self.fc(x)
+        
+        #x = torch.relu(self.fc1(x))
+        #x = torch.relu(self.fc2(x))
+        #x = self.fc3(x)
+        #return x
 
 class replay_buffer():
     def __init__(self, capacity, buffer):
         self.capacity = capacity
         self.buffer = buffer
 
-    def add_experience(self, experience):
-        if len(self.buffer) < self.capacity:
-            self.buffer.append(experience)
-        #else: print("buffer is full")
+    def add_experience(self, state, action, reward, next_state, done):
+        
+        experience = (state, action, np.array([reward]), next_state, done)
+        self.buffer.append(experience)
 
     def update_buffer_at(self, index, new_buffer):
         self.buffer[index] = new_buffer
@@ -184,16 +305,28 @@ class replay_buffer():
         states, actions, rewards, next_states, dones = zip(*batch)
 
         return states, actions, rewards, next_states, dones
-
-    def __len__(self):
-        return len(self.buffer)
     
 
 actions = ["up","down","right","left","jump_up","jump_down","jump_right","jump_left"]
 utils = common_functions()
 path_to_file_maze = "./saved_maze/maze5"
 
-batch_sizes = [32, 64,128]
+deep_Q_learning_class(gamma=0.99, epsilon=0, batch_size = 32, load_maze=True, maze_args=[path_to_file_maze], actions=actions).vanillaDQN()
+input()
+batch_sizes = [32, 64]
+gammas = [0.99]
+epsilons = [0.15, 0.2]
+
+Q_learning_scores = []
+q_learning_comb = []
 for batch_size in batch_sizes:
-    q, policy = deep_Q_learning_class(gamma=0.99, epsilon=0.2, batch_size = batch_size, load_maze=True, maze_args=[path_to_file_maze], actions=actions).DQN_agent()
-    Q_learning_score = utils.play_episode(policy, path_to_file_maze)
+    for gamma in gammas:
+        for epsilon in epsilons:
+            q, policy = deep_Q_learning_class(gamma=gamma, epsilon=epsilon, batch_size = batch_size, load_maze=True, maze_args=[path_to_file_maze], actions=actions).DQN_agent()
+            Q_learning_score = utils.play_episode(policy, path_to_file_maze)
+            Q_learning_scores.append(Q_learning_score)
+            q_learning_comb.append(("batch ",batch_size," gammas",gamma, " epsilon " ,epsilon," score ", Q_learning_score))
+
+for v in q_learning_comb:
+
+    print(v)
