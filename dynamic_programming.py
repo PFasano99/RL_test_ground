@@ -118,28 +118,23 @@ class value_iteration_class(dynamic_programming):
                             next_state, reward = utils.action_value_function(state, action, self.finish_coord)
                             if reward > 0: done = True
                             value = reward + self.gamma * state_values[next_state[0],next_state[1]]
+                            # Update the maximum Q-value and corresponding action probabilities
                             if value > q_max:
                                 q_max = value
                                 action_probs = np.zeros(len(self.actions))
                                 action_probs[a] = 1
                             
                             a+=1
-                            
+                        
+                        # Update the state value with the maximum Q-value
                         state_values[state[0],state[1]] = q_max
                                                 
                         state_id = utils.find_index_of_coordinate(self.path, state)
                         policy[state_id] = action_probs
 
+                        # Update the delta with the maximum difference in state values
                         delta = max(delta, abs(old_value - state_values[state[0],state[1]]))
-
-        
-        print("--- Iteration ---")
-        #maze_generator().print_maze(state_values, "float")
-        print("---- Policy ----")
-        #maze_generator().print_maze(policy, "float")
-  
-        #maze_generator().save_maze_as_csv(state_values, "./saved_maze/maze_val_iter_"+str(0), "float")
-        #maze_generator().save_maze_as_csv(policy, "./saved_maze/policy_val_iter_"+str(0), "float")
+                        
         return policy, state_values
 
 """

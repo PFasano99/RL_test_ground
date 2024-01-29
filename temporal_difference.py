@@ -102,7 +102,7 @@ class Q_learning_class(temporal_difference_class):
         return q, policy
         
     def update_q_table(self, q, state, action, reward, next_state, alpha, gamma):
-
+        utils = common_functions()
         nxt_s = utils.find_index_of_coordinate(self.path, next_state)
         qa = max([q[(nxt_s, self.actions[a])] for a in range(len(self.actions))])
 
@@ -171,7 +171,7 @@ class sarsa_class(temporal_difference_class):
                     E[(s,self.actions[a])] = 0.0
             
             state = self.start_coord
-            action = self.actions[1]#self.epsilon_greedy_policy(Q, state, self.epsilon)
+            action = self.actions[1]
             done = False
             
             while True:
@@ -203,17 +203,17 @@ class sarsa_class(temporal_difference_class):
             
         policy = self.build_policy_from_q(q=Q)
 
-        common_functions().save_dictionary_to_csv(Q, "./saved_maze/Q_sarsa_lambda")
-        maze_generator().save_maze_as_csv(policy, "./saved_maze/policy_sarsa_lambda", "float")
+        #common_functions().save_dictionary_to_csv(Q, "./saved_maze/Q_sarsa_lambda")
+        #maze_generator().save_maze_as_csv(policy, "./saved_maze/policy_sarsa_lambda", "float")
 
         return Q, policy
     
-
+"""
 actions = ["up","down","right","left"]#,"jump_up","jump_down","jump_right","jump_left"]
 utils = common_functions()
 path_to_file_maze = "./saved_maze/maze4"
 
-"""
+
 #(0.5, 0.99, 0.9, 0, 27.30000000000002)
 alphas = [0.5, 0.6, 0.99, 1]
 gammas = [0.85, 0.9, 0.99]

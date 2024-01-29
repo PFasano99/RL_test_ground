@@ -69,6 +69,7 @@ class DQNAgent:
 
     def train(self):
         if self.replay_buffer.__len__() > self.batch_size:
+            # we sample from our buffer
             states, actions, rewards, next_states, dones = self.replay_buffer.sample_batch(self.batch_size)
             states = torch.tensor(np.asarray(states), dtype=torch.float32).to(self.device)
             actions = torch.tensor(np.asarray(actions), dtype=torch.int64).to(self.device)
@@ -77,9 +78,7 @@ class DQNAgent:
             dones = torch.FloatTensor(dones).to(self.device)
             
             next_q_values = self.target_network(next_states)
-            q_values = self.q_network(states).gather(1, actions.unsqueeze(-1)).squeeze()
-            #target = torch.from_numpy(rewards.flatten() + self.gamma * torch.max(next_q_values).detach().cpu().numpy()).to(self.device)
-            #target = target.float()            
+            q_values = self.q_network(states).gather(1, actions.unsqueeze(-1)).squeeze()         
             target = rewards + (1 - dones) * self.gamma * next_q_values.max(1)[0]
             
             loss = self.loss_function(q_values, target)
@@ -141,8 +140,6 @@ def train_dqn(episodes=1500, path_to_file_maze = "./saved_maze/maze4", batch_siz
         while True:
             steps+=1
             action_id = agent.select_action(state)
-            
-            #next_state, reward, done = simulate_action(state, action)
             action = actions[action_id]
             next_state, reward = utils.action_value_function(state, action, agent.finish_coord)
             
