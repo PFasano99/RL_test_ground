@@ -9,7 +9,7 @@ from utils import *
 
 class temporal_difference_class():
     
-    def __init__(self, alpha = 0.4, discount_value = 0.99, epsilon = 0.1, load_maze = False, maze_args = [], actions= [], num_iterations = 1000, player_char = 9):
+    def __init__(self, alpha = 0.4, discount_value = 0.99, epsilon = 0.1, maze_path="", actions= [], num_iterations = 1000, player_char = 9):
         self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = discount_value
@@ -19,24 +19,14 @@ class temporal_difference_class():
 
         generator = maze_generator()
         
+        maze, path, start_coord, finish_coord = generator.load_maze_from_csv(maze_path)
+        self.maze = maze
+        self.path = path
+        self.size_x = len(maze)
+        self.size_y = len(maze[0])
+        self.start_coord = start_coord
+        self.finish_coord = finish_coord
 
-        if load_maze:
-            path = maze_args[0]
-            maze, path, start_coord, finish_coord = generator.load_maze_from_csv(path)
-            self.maze = maze
-            self.path = path
-            self.size_x = len(maze)
-            self.size_y = len(maze[0])
-            self.start_coord = start_coord
-            self.finish_coord = finish_coord
-        else:
-            self.size_x = maze_args[0]
-            self.size_y = maze_args[1]
-            self.start_coord = maze_args[2]
-            self.finish_coord = maze_args[3]
-            maze, path = generator.generate_maze(size_x=maze_args[0], size_y =maze_args[1], start_coord = maze_args[2], finish_coord = maze_args[3], n_of_turns = maze_args[4], log = False)
-            self.maze = maze
-            self.path = path
     
     def epsilon_greedy_policy(self, q, state, epsilon):
         """
@@ -263,18 +253,19 @@ for result in pos_result:
     rerun_score.append(sarsa_lambda_score)
 print("---")
 print(rerun_score)
-"""
 
-q, policy = sarsa_class(alpha = 0.5, discount_value = 0.99, epsilon = 0.2, load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 2000).sarsa()
+
+q, policy = sarsa_class(alpha = 0.5, discount_value = 0.99, epsilon = 0.2, maze_path=path_to_file_maze, actions=actions, num_iterations = 2000).sarsa()
 sarsa_score = utils.play_episode(policy, path_to_file_maze, step_by_step = False, show_window=False)
     
-q, policy = sarsa_class(alpha = 0.5, discount_value = 0.99, epsilon = 0.2, load_maze=True, maze_args=[path_to_file_maze], actions=actions, num_iterations = 2000).sarsa_lambda(lambda_par = 0.2)
+q, policy = sarsa_class(alpha = 0.5, discount_value = 0.99, epsilon = 0.2, maze_path=path_to_file_maze, actions=actions, num_iterations = 2000).sarsa_lambda(lambda_par = 0.2)
 sarsa_lambda_score = utils.play_episode(policy, path_to_file_maze, show_window=False)
 
-q, policy = Q_learning_class(alpha = 0.6 ,discount_value=0.99, load_maze=True, maze_args=[path_to_file_maze], actions=actions).Q_learning()
+q, policy = Q_learning_class(alpha = 0.6 ,discount_value=0.99, maze_path=path_to_file_maze, actions=actions).Q_learning()
 Q_learning_score = utils.play_episode(policy, path_to_file_maze, show_window=False)
 
 
 print("Q_learning solved the maze with a score of: ", str(Q_learning_score))
 print("SARSA iteration solved the maze with a score of: ", str(sarsa_score))
 print("SARSA-lambda iteration solved the maze with a score of: ", str(sarsa_lambda_score))
+"""

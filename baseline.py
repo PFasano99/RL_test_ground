@@ -9,7 +9,7 @@ from utils import *
 
 class baseline():
 
-    def __init__(self, maze_args = [], actions= [], num_iterations = 100, player_char = 9):
+    def __init__(self, maze_path="", actions= [], num_iterations = 100, player_char = 9):
         """
             actions is composed as [action_id,action_id,...] e.g. actions = ["up","down","right","left","jump_up","jump_down","jump_right","jump_left"]
         """
@@ -21,8 +21,7 @@ class baseline():
         generator = maze_generator()
         
         print("loading maze")
-        path = maze_args[0]
-        maze, path, start_coord, finish_coord = generator.load_maze_from_csv(path)
+        maze, path, start_coord, finish_coord = generator.load_maze_from_csv(maze_path)
         self.maze = maze
         self.path = path
         self.size_x = len(maze)
@@ -68,9 +67,11 @@ class baseline():
         print("Steps mean: ", np.mean(all_steps))
         print("Wins: ", sum(1 for value in all_wins if value), "/",self.num_iteration)
 
+        return np.mean(all_rewards), np.mean(all_steps), sum(1 for value in all_wins if value)
 
+"""
 path_to_file_maze = "./saved_maze/maze4"
 actions = ["up","down","right","left"]#,"jump_up","jump_down","jump_right","jump_left"]
 
 baseline(maze_args=[path_to_file_maze], actions=actions).solve_maze()
-
+"""

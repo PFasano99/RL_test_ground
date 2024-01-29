@@ -11,7 +11,7 @@ import random
 
 class dynamic_programming():
 
-    def __init__(self, discount_value, load_maze = False, maze_args = [], actions= [], num_iterations = 100, player_char = 9, n_runs = 100):
+    def __init__(self, discount_value, maze_path, actions= [], num_iterations = 100, player_char = 9, n_runs = 100):
         """
             actions is composed as [action_id,action_id,...] e.g. actions = ["up","down","right","left","jump_up","jump_down","jump_right","jump_left"]
         """
@@ -22,31 +22,20 @@ class dynamic_programming():
         self.player_char = player_char
         self.n_runs = n_runs
 
-
         generator = maze_generator()
         
-        if load_maze:
-            print("loading maze")
-            path = maze_args[0]
-            maze, path, start_coord, finish_coord = generator.load_maze_from_csv(path)
-            self.maze = maze
-            self.path = path
-            self.size_x = len(maze)
-            self.size_y = len(maze[0])
-            self.start_coord = start_coord
-            self.finish_coord = finish_coord
-        else:
-            self.size_x = maze_args[0]
-            self.size_y = maze_args[1]
-            self.start_coord = maze_args[2]
-            self.finish_coord = maze_args[3]
-            maze, path = generator.generate_maze(size_x=maze_args[0], size_y =maze_args[1], start_coord = maze_args[2], finish_coord = maze_args[3], n_of_turns = maze_args[4], log = False)
-            self.maze = maze
-            self.path = path
+        maze, path, start_coord, finish_coord = generator.load_maze_from_csv(maze_path)
+        self.maze = maze
+        self.path = path
+        self.size_x = len(maze)
+        self.size_y = len(maze[0])
+        self.start_coord = start_coord
+        self.finish_coord = finish_coord
+
 
 class policy_iteration_class(dynamic_programming):
     def policy_iteration(self, theta=1e-6):
-        print("policy iteration")
+        print("Running policy iteration")
         utils = common_functions(self.maze)
 
         # Initialize a random policy
@@ -106,7 +95,7 @@ class policy_iteration_class(dynamic_programming):
 
 class value_iteration_class(dynamic_programming):
     def value_iteration(self, theta=1e-6):
-        print("value iteration")
+        print("Running value iteration")
         utils = common_functions(self.maze)
 
         policy = np.zeros([len(self.path), len(self.actions)])
@@ -153,6 +142,7 @@ class value_iteration_class(dynamic_programming):
         #maze_generator().save_maze_as_csv(policy, "./saved_maze/policy_val_iter_"+str(0), "float")
         return policy, state_values
 
+"""
 actions = ["up","down","right","left"]#,"jump_up","jump_down","jump_right","jump_left"]
 
 utils = common_functions()
@@ -168,3 +158,4 @@ pol_iter_score = utils.play_episode(policy, path_to_file_maze, show_window = Fal
 
 print("value iteration solved the maze with a score of: ", str(val_iter_score))
 print("policy iteration solved the maze with a score of: ", str(pol_iter_score))
+"""

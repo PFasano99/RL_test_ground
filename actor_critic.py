@@ -36,7 +36,7 @@ class replay_buffer():
 
 class actor_critic_class():
 
-    def __init__(self, gamma = 0.99, learning_rate = 3e-4 , load_maze = True, maze_args = [], actions= [], max_episodes = 1500, player_char = 9, epsilon_start=1, epsilon_decay=0.998, epsilon_min=0.01):
+    def __init__(self, gamma = 0.99, learning_rate = 3e-4 , maze_path = "", cuda = True, actions= [], max_episodes = 1500, player_char = 9, epsilon_start=1, epsilon_decay=0.998, epsilon_min=0.01):
         self.gamma = gamma
         self.actions = actions
         self.episodes = max_episodes
@@ -46,23 +46,14 @@ class actor_critic_class():
             
         generator = maze_generator()      
 
-        if load_maze:
-            path = maze_args[0]
-            maze, path, start_coord, finish_coord = generator.load_maze_from_csv(path)
-            self.maze = maze
-            self.path = path
-            self.size_x = len(maze)
-            self.size_y = len(maze[0])
-            self.start_coord = start_coord
-            self.finish_coord = finish_coord
-        else:
-            self.size_x = maze_args[0]
-            self.size_y = maze_args[1]
-            self.start_coord = maze_args[2]
-            self.finish_coord = maze_args[3]
-            maze, path = generator.generate_maze(size_x=maze_args[0], size_y =maze_args[1], start_coord = maze_args[2], finish_coord = maze_args[3], n_of_turns = maze_args[4], log = False)
-            self.maze = maze
-            self.path = path
+        maze, path, start_coord, finish_coord = generator.load_maze_from_csv(maze_path)
+        self.maze = maze
+        self.path = path
+        self.size_x = len(maze)
+        self.size_y = len(maze[0])
+        self.start_coord = start_coord
+        self.finish_coord = finish_coord
+
 
         self.num_episodes = max_episodes
         self.num_outputs = len(self.actions)
@@ -71,8 +62,8 @@ class actor_critic_class():
         self.epsilon_min = epsilon_min
 
         self.device = "cpu"
-        if torch.cuda.is_available():
-            self.device = "cuda:1" 
+        if torch.cuda.is_available() and cuda:
+            self.device = "cuda" 
         print(self.device)
 
         self.action_size = len(self.actions)
@@ -84,7 +75,6 @@ class actor_critic_class():
         # Define the optimizer
         self.optimizer = optim.Adam(self.agent.parameters(), lr=learning_rate)
 
-        self.replay_buffer = replay_buffer(capacity=20000, buffer=[])
 
     def update(self):
         num_episodes = self.num_episodes
@@ -148,7 +138,7 @@ class actor_critic_class():
                     while new_action_id == action_id:
                         new_action_id = np.random.choice(len(self.actions))
 
-                    action = actions[new_action_id]
+                    action = self.actions[new_action_id]
                     next_state, reward = utils.action_value_function(state, action, self.finish_coord)
                     if next_state == self.finish_coord: 
                         done = True
@@ -178,6 +168,7 @@ class actor_critic_class():
         
         print("fnal epsilon = ", epsilon)
         print("max reward is: ", np.max(all_rewards), " at ", (np.argmax(all_rewards)))
+        return np.max(all_rewards)
 
 # Define the actor-critic network
 class ActorCritic(nn.Module):
@@ -198,8 +189,9 @@ class ActorCritic(nn.Module):
         
         return pi, v
     
-
+"""
 path_to_file_maze = "./saved_maze/maze4"
 actions = ["up","down","right","left"]#,"jump_up","jump_down","jump_right","jump_left"]
 
 agent = actor_critic_class(maze_args=[path_to_file_maze], actions = actions).update()
+"""

@@ -62,7 +62,7 @@ class common_functions():
 
         o = 1
         for state in self.maze:
-            print(state)
+            #print(state)
             maze_copy[state] = o
             o+=1
 

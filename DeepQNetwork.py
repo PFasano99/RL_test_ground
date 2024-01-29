@@ -27,30 +27,20 @@ class QNetwork(nn.Module):
         return self.fc4(x)
 
 class DQNAgent:
-    def __init__(self, output_size, maze_args, load_maze=True, batch_size = 1024, lr=0.001, gamma=0.99, epsilon_start=1, epsilon_decay=0.996, epsilon_min=0.01):
+    def __init__(self,  output_size, maze_path, replay_buffer_size=50000, cuda = True, gamma=0.99, batch_size = 1024, lr=0.001, epsilon_start=1, epsilon_decay=0.996, epsilon_min=0.01):
         generator = maze_generator()      
         
-        if load_maze:
-            path = maze_args[0]
-            maze, path, start_coord, finish_coord = generator.load_maze_from_csv(path)
-            self.maze = maze
-            self.path = path
-            self.size_x = len(maze)
-            self.size_y = len(maze[0])
-            self.start_coord = start_coord
-            self.finish_coord = finish_coord
-        else:
-            self.size_x = maze_args[0]
-            self.size_y = maze_args[1]
-            self.start_coord = maze_args[2]
-            self.finish_coord = maze_args[3]
-            maze, path = generator.generate_maze(size_x=maze_args[0], size_y =maze_args[1], start_coord = maze_args[2], finish_coord = maze_args[3], n_of_turns = maze_args[4], log = False)
-            self.maze = maze
-            self.path = path
-        
+        maze, path, start_coord, finish_coord = generator.load_maze_from_csv(maze_path)
+        self.maze = maze
+        self.path = path
+        self.size_x = len(maze)
+        self.size_y = len(maze[0])
+        self.start_coord = start_coord
+        self.finish_coord = finish_coord
+    
         self.device = "cpu"
-        if torch.cuda.is_available():
-            self.device = "cuda:2" 
+        if torch.cuda.is_available() and cuda:
+            self.device = "cuda" 
         print(self.device)
         
         self.input_size = len(self.path[0])
@@ -64,12 +54,10 @@ class DQNAgent:
         self.epsilon = epsilon_start
         self.epsilon_decay = epsilon_decay
         self.epsilon_min = epsilon_min
-        self.loss = []
 
-        self.replay_buffer = replay_buffer(capacity=50000, buffer=[])
+        self.replay_buffer = replay_buffer(capacity=replay_buffer_size, buffer=[])
         self.batch_size = batch_size
         self.target_network_frequency = 5
-        self.tau = 0.005
 
     def select_action(self, state):
         if np.random.rand() < self.epsilon:
@@ -133,11 +121,11 @@ class replay_buffer():
     def __len__(self):
         return len(self.buffer)
 
-def train_dqn(episodes=1500, path_to_file_maze = "./saved_maze/maze4"):
+def train_dqn(episodes=1500, path_to_file_maze = "./saved_maze/maze4", batch_size = 512, cuda = True, epsilon_start = 1, epsilon_decay = 0.999, replay_buffer_size=50000):
     
     actions = ["up","down","right","left"]#,"jump_up","jump_down","jump_right","jump_left"]
 
-    agent = DQNAgent(output_size=len(actions), maze_args=[path_to_file_maze])
+    agent = DQNAgent(output_size=len(actions), maze_path=path_to_file_maze, batch_size=batch_size, cuda=cuda, epsilon_start=epsilon_start, epsilon_decay=epsilon_decay, replay_buffer_size=replay_buffer_size)
     utils = common_functions(agent.maze)
     all_rewards = []
 
@@ -218,11 +206,12 @@ def train_dqn(episodes=1500, path_to_file_maze = "./saved_maze/maze4"):
         all_rewards.append(total_reward)
         agent.update_epsilon()
         print(f'Episode {episode}: Start reward: {len(agent.path)*0.4} Total reward = {total_reward} \n Done: {done} Final state: {state} ')
-        
+     
 
     print("agent.epsilon ",agent.epsilon)
     print("max reward is: ", np.max(all_rewards), " at ", (np.argmax(all_rewards)))
     
+    return np.max(all_rewards)
 
 
-train_dqn()
+#train_dqn()
