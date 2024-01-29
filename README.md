@@ -5,8 +5,8 @@ The reinforcement learning agents that are implemented to solve this task are th
 
 - Actor-Critic
 - Deep-Q Networks
-- Value Iteration (Dynamic programming)
-- SARSA / $\lambda$ SARSA
+- Value Iteration / Policy Iteration (Dynamic programming)
+- SARSA / $\lambda$ SARSA / Q-Learning
 
 ## Requirements
 Before running the code, install following requirements modules:
@@ -133,3 +133,4 @@ The jump mechanic allows the agent to jump over walls, in other worlds it allows
         0000001                 0000001      1111100                 1111100
 
 ***(where 1 is the legal path, 0  is a wall and 9 the player)***
+

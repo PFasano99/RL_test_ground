@@ -38,7 +38,7 @@ class common_functions():
                 return index
         return -1
 
-    def play_episode(self, policy, load_path = "", start_coord = [], finish_coord=[], maze_path=[], step_by_step = False):
+    def play_episode(self, policy, load_path = "", start_coord = [], finish_coord=[], maze_path=[], step_by_step = False, show_window = True):
         """
             Given the policy and either a path to a maze or the maze it self (with the start and finishing coords) this method 
             runs the policy over the maze showing the result of the policy and returning the score. 
@@ -53,7 +53,7 @@ class common_functions():
         player_coords = start_coord
         score = len(maze_path)*0.4
 
-        window = draw_matrix_grid(self.maze, size_x=self.size_x, size_y =self.size_y)
+        if show_window: window = draw_matrix_grid(self.maze, size_x=self.size_x, size_y =self.size_y)
         actions = maze_actions(win_coords=finish_coord)
 
         pas_char = 2
@@ -94,43 +94,42 @@ class common_functions():
             if action_index == 0:
                 self.maze, pas_char, player_coords, cost = actions.go_up(self.maze, player_coords, pas_char, self.player_char, explored_path = explored_path)  
                 score += cost           
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
                 
             elif action_index == 1:
                 self.maze, pas_char, player_coords, cost = actions.go_down(self.maze, player_coords, pas_char, self.player_char, explored_path = explored_path)  
                 score += cost
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
                         
             elif action_index == 2:
                 self.maze, pas_char, player_coords, cost = actions.go_right(self.maze, player_coords, pas_char, self.player_char, explored_path = explored_path)  
                 score += cost
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
                         
             elif action_index == 3:
                 self.maze, pas_char, player_coords, cost = actions.go_left(self.maze, player_coords, pas_char, self.player_char, explored_path = explored_path)  
                 score += cost      
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
                             
             if action_index == 4:
                 self.maze, pas_char, player_coords, cost = actions.jump(self.maze, player_coords, pas_char, self.player_char, 0, explored_path = explored_path, step_size = 2)  
                 score += cost  
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
                 
             elif action_index == 5:
                 self.maze, pas_char, player_coords, cost = actions.jump(self.maze, player_coords, pas_char, self.player_char, 2, explored_path = explored_path, step_size = 2)  
                 score += cost
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
                             
             elif action_index == 6:
                 self.maze, pas_char, player_coords, cost = actions.jump(self.maze, player_coords, pas_char, self.player_char,1, explored_path = explored_path, step_size = 2)  
                 score += cost
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
-                
-                        
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                          
             elif action_index == 7:
                 self.maze, pas_char, player_coords, cost = actions.jump(self.maze, player_coords, pas_char, self.player_char,3, explored_path = explored_path, step_size = 2)  
                 score += cost           
-                window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
+                if show_window: window = update_ui(window, self.maze, size_x=self.size_x, size_y =self.size_y, score = score)
 
             explored_path.append(player_coords)
             
