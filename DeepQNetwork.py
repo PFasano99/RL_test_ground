@@ -120,11 +120,11 @@ class replay_buffer():
     def __len__(self):
         return len(self.buffer)
 
-def train_dqn(episodes=1500, path_to_file_maze = "./saved_maze/maze4", batch_size = 512, cuda = True, epsilon_start = 1, epsilon_decay = 0.999, replay_buffer_size=50000):
+def train_dqn(gamma = 0.99, episodes=1500, path_to_file_maze = "./saved_maze/maze4", batch_size = 512, cuda = True, epsilon_start = 1, epsilon_decay = 0.999, replay_buffer_size=50000):
     
     actions = ["up","down","right","left"]#,"jump_up","jump_down","jump_right","jump_left"]
 
-    agent = DQNAgent(output_size=len(actions), maze_path=path_to_file_maze, batch_size=batch_size, cuda=cuda, epsilon_start=epsilon_start, epsilon_decay=epsilon_decay, replay_buffer_size=replay_buffer_size)
+    agent = DQNAgent(gamma=gamma, output_size=len(actions), maze_path=path_to_file_maze, batch_size=batch_size, cuda=cuda, epsilon_start=epsilon_start, epsilon_decay=epsilon_decay, replay_buffer_size=replay_buffer_size)
     utils = common_functions(agent.maze)
     all_rewards = []
 

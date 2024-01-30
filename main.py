@@ -14,23 +14,21 @@ def main():
     # Create ArgumentParser object
     parser = argparse.ArgumentParser(description='This script is made as an interface to call the RL algorithms: \n - DQN, \n - AC, \n - value iteration, \n - SARSA, \n - SARSA-lambda. ')
 
-    # general params
-    parser.add_argument('--save_path', type=str, default="", help='Path to save any file generated e.g. policies')
-
     # parameters to choose which RL algorithms to run
     parser.add_argument('--run_all', type=bool, default=True, help='Run all RL algorithms on maze')
-    parser.add_argument('--run_AC', type=bool, help='Run actor critic on maze')
-    parser.add_argument('--run_DQN', type=bool, help='Run deep Q-network on maze')
-    parser.add_argument('--run_VI', type=bool, help='Run value iteration on maze')
-    parser.add_argument('--run_SA', type=bool, help='Run SARSA on maze')
-    parser.add_argument('--run_SAL', type=bool, help='Run SARSA-lambda on maze')
-    parser.add_argument('--run_Q', type=bool, help='Run Q-learning on maze')
-    parser.add_argument('--run_RA', type=bool, help='Run random-approach on maze')
+    parser.add_argument('--run_AC', type=bool, default=False, help='Run actor critic on maze')
+    parser.add_argument('--run_DQN', type=bool, default=False, help='Run deep Q-network on maze')
+    parser.add_argument('--run_VI', type=bool, default=False, help='Run value iteration on maze')
+    parser.add_argument('--run_SA', type=bool, default=False, help='Run SARSA on maze')
+    parser.add_argument('--run_SAL', type=bool, default=False, help='Run SARSA-lambda on maze')
+    parser.add_argument('--run_Q', type=bool, default=False, help='Run Q-learning on maze')
+    parser.add_argument('--run_RA', type=bool, default=False, help='Run random-approach on maze')
     # parameters for maze maze
     parser.add_argument('--maze_path', type=str, default="", help='Path to load an already existing maze.csv')
     parser.add_argument('--maze_name', type=str, default="", help='The name to be assigned to the generated maze')
-    parser.add_argument('--maze_x', type=int, help='hight of the maze')
-    parser.add_argument('--maze_y', type=int, help='width of the maze')
+    parser.add_argument('--save_path', type=str, default="", help='Path to save any file generated e.g. policies')
+    parser.add_argument('--maze_x', type=int, default=20, help='hight of the maze')
+    parser.add_argument('--maze_y', type=int, default=40, help='width of the maze')
     parser.add_argument('--maze_fp', type=int, default = 1, help='the number of minimum focal points to add in the maze')
     # parameters for deep models
     parser.add_argument('--batch_size', type=int, default=512, help='batch size for deep models')
@@ -148,12 +146,12 @@ def main():
             print("Q_learning solved the maze with a score of: ", str(Q_learning_score))
 
         if run_DQN:
-            dqn_score = DeepQNetwork.train_dqn(episodes=episodes, path_to_file_maze = path_to_file_maze, batch_size = batch_size, cuda = cuda, epsilon_start=epsilon_start, epsilon_decay = epsilon_decay, replay_buffer_size=replay_buffer_size)
+            dqn_score = DeepQNetwork.train_dqn(gamma = discount_value, episodes=episodes, path_to_file_maze = path_to_file_maze, batch_size = batch_size, cuda = cuda, epsilon_start=epsilon_start, epsilon_decay = epsilon_decay, replay_buffer_size=replay_buffer_size)
             print("DQN  solved the maze with a score of: ", str(dqn_score))
             print(" (with experience replay and epsilon decay)")
             
         if run_AC:
-            a2c_score = actor_critic.actor_critic_class(gamma = discount_value, maze_path = path_to_file_maze, actions= actions, max_episodes = episodes, epsilon_start=epsilon_start, epsilon_decay=epsilon_decay, cuda = cuda).update()
+            a2c_score = actor_critic.actor_critic_class(gamma = discount_value, maze_path = path_to_file_maze, actions= actions, max_episodes = episodes, epsilon_start=epsilon_start, epsilon_decay=epsilon_decay, cuda = cuda, replay_buffer_size=replay_buffer_size, batch_size = batch_size).update()
             print("Actor Critic solved the maze with a score of: ", str(a2c_score))
             print(" (with epsilon decay)")
         
@@ -188,6 +186,6 @@ main()
         python3 ./main.py --maze_path ./saved_maze/maze4  --run_DQN True --episodes 2000 --gamma 0.99 --epsilon_start 1 --epsilon_decay 0.999 --cuda True --replay_buffer_size 50000 --batch_size 1024
     
     Actor Critic
-        python3 ./main.py --maze_path ./saved_maze/maze4  --run_DQN True --episodes 2000 --gamma 0.99 --epsilon_start 1 --epsilon_decay 0.999 --cuda True 
+        python3 ./main.py --maze_path ./saved_maze/maze4  --run_AC True --episodes 2000 --gamma 0.99 --epsilon_start 1 --epsilon_decay 0.999 --cuda True --replay_buffer_size 50000 --batch_size 1024
     
 """

@@ -3,7 +3,7 @@ from maze_ui import *
 import time
 import keyboard
 
-def play(size_x = 20, size_y=40, player_char = 9, pas_char = 3, player_starting_coords= [0,1], win_cords = [19,39], save = True, load = False):
+def play(size_x = 20, size_y=40, player_char = 9, pas_char = 3, player_starting_coords= [0,1], win_cords = [19,39], save = False, load = True):
     """
         This function is used to play the Minosse's maze
     """
@@ -14,11 +14,13 @@ def play(size_x = 20, size_y=40, player_char = 9, pas_char = 3, player_starting_
     generator = maze_generator()
 
     if load:
-        maze, path, player_coords, win_cords = generator.load_maze_from_csv("saved_maze/maze1")
+        maze, path, player_coords, win_cords = generator.load_maze_from_csv("saved_maze/maze4")
+        size_x = len(maze)
+        size_y = len(maze[0])
     else:
         maze, path = generator.generate_maze(size_x=size_x, size_y =size_y, start_coord = player_coords, finish_coord = win_cords, n_of_turns = 4, log = False)
 
-    if save: generator.save_maze_as_csv(maze, "saved_maze/maze5")
+    if save: generator.save_maze_as_csv(maze, "saved_maze/maze6")
 
     score = len(path)*0.4
     window = draw_matrix_grid(maze, size_x=size_x, size_y =size_y)
